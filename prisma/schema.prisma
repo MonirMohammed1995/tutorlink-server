@@ -1,0 +1,147 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  TUTOR
+  ADMIN
+}
+
+enum WeekDay {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum BookingStatus {
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id              String        @id @default(cuid())
+  name            String
+  email           String        @unique
+  password        String?
+  image           String?
+  role            Role
+  isActive        Boolean       @default(true)
+  isVerified      Boolean       @default(false)
+  provider        String?
+  providerId      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  studentBookings Booking[]     @relation("StudentBookings")
+  tutorProfile    TutorProfile?
+  studentReviews  Review[]      @relation("StudentReviews")
+}
+
+model TutorProfile {
+  id              String          @id @default(cuid())
+  userId          String          @unique
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline        String?
+  bio             String?
+  education       String?
+  experience      Int             @default(0)
+  hourlyRate      Float
+  language        String?
+  rating          Float           @default(0)
+  totalReviews    Int             @default(0)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  tutorCategories TutorCategory[]
+  availabilities  Availability[]
+  bookings        Booking[]
+  reviews         Review[]
+}
+
+model Category {
+  id              String          @id @default(cuid())
+  name            String          @unique
+  slug            String          @unique
+  description     String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  tutorCategories TutorCategory[]
+}
+
+model TutorCategory {
+  id         String       @id @default(cuid())
+  tutorId    String
+  tutor      TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([tutorId, categoryId])
+}
+
+model Availability {
+  id          String       @id @default(cuid())
+  tutorId     String
+  tutor       TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  day         WeekDay
+  startTime   String
+  endTime     String
+  isAvailable Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  bookings    Booking[]
+
+  @@unique([tutorId, day, startTime, endTime])
+  @@index([tutorId])
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  studentId      String
+  student        User          @relation(fields: [studentId], references: [id], name: "StudentBookings", onDelete: Cascade)
+  tutorId        String
+  tutor          TutorProfile  @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  availabilityId String
+  availability   Availability  @relation(fields: [availabilityId], references: [id])
+  bookingDate    DateTime
+  price          Float
+  status         BookingStatus @default(CONFIRMED)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  review         Review?
+
+  @@index([studentId])
+  @@index([tutorId])
+  @@index([availabilityId])
+}
+
+model Review {
+  id        String       @id @default(cuid())
+  bookingId String       @unique
+  booking   Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User         @relation("StudentReviews", fields: [studentId], references: [id], onDelete: Cascade)
+  tutorId   String
+  tutor     TutorProfile @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  rating    Int
+  comment   String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([tutorId])
+  @@index([studentId])
+}
