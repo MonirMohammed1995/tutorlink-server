@@ -1,11 +1,15 @@
 import express from "express";
 import cors from "cors";
-
 import routes from "./routes";
 
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 
@@ -18,6 +22,6 @@ app.get("/", (req, res) => {
   });
 });
 
-app.use("/api/v1", routes);
+app.use("/api", routes);
 
 export default app;

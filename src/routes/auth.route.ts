@@ -1,12 +1,10 @@
 import { Router } from "express";
+import { toNodeHandler } from "better-auth/node";
+import { auth } from "../lib/auth";
 
 const router = Router();
 
-router.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "Better Auth Route Ready",
-  });
-});
+// Better Auth handles ALL auth endpoints
+router.all("/*splat", toNodeHandler(auth));
 
 export default router;
