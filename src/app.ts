@@ -1,3 +1,4 @@
+import { globalErrorHandler } from "./middlewares/globalErrorHandler";
 import express from "express";
 import cors from "cors";
 import routes from "./routes";
@@ -23,5 +24,6 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api", routes);
+app.use(globalErrorHandler);
 
 export default app;
